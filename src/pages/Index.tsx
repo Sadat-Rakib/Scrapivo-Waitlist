@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, FormEvent, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import confetti from "canvas-confetti";
+import emailjs from '@emailjs/browser';
 
 const painPoints = [
   "Apollo scheduling gaps 😮‍💨",
@@ -15,9 +16,9 @@ const painPoints = [
 ];
 
 const stats = [
-  { value: "3+ hrs", label: "lost every week to filter hell" },
-  { value: "25%", label: "of emails bounce. Gone. Just like that." },
-  { value: "87%", label: "call outreach tools 'too complex'" },
+  { value: "87%", label: "frustrated with existing outreach tools" },
+  { value: "3hrs", label: "lost/week just on setup and filtering" },
+  { value: "25%", label: "bounced before anyone reads a word" },
 ];
 
 const useCountUp = (end: string, duration = 1500) => {
@@ -70,9 +71,15 @@ const Index = () => {
   const [name, setName] = useState("");
   const [frustration, setFrustration] = useState("");
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+
+  // Initialize EmailJS
+  useEffect(() => {
+    emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+  }, []);
 
   // Mouse-follow glow
   useEffect(() => {
@@ -100,33 +107,48 @@ const Index = () => {
     };
   }, []);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
-    console.log({ name, frustration, email });
-    setSubmitted(true);
+    setIsLoading(true);
 
-    // Fire confetti
-    const duration = 2000;
-    const end = Date.now() + duration;
-    const frame = () => {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.7 },
-        colors: ["#ffffff", "#a0a0a0", "#606060"],
-      });
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.7 },
-        colors: ["#ffffff", "#a0a0a0", "#606060"],
-      });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    };
-    frame();
+    try {
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          name: name,
+          email: email,
+          frustration: frustration,
+        }
+      );
+    } catch (error) {
+      console.error("EmailJS error:", error);
+    } finally {
+      setIsLoading(false);
+      setIsSuccess(true);
+
+      // Fire confetti
+      const duration = 2000;
+      const end = Date.now() + duration;
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.7 },
+          colors: ["#ffffff", "#a0a0a0", "#606060"],
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.7 },
+          colors: ["#ffffff", "#a0a0a0", "#606060"],
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      frame();
+    }
   };
 
   return (
@@ -182,19 +204,21 @@ const Index = () => {
 
         {/* Subcopy */}
         <p className="animate-fade-rise-delay font-body font-light text-base max-w-md mx-auto mt-5 leading-relaxed text-muted-foreground relative z-10">
-          Every other tool makes you fight through filters, broken warm-ups, and walls of setup. Just tell Scrapivo who/what you want. It finds them, verifies them, and writes your outreach. Done.
+          Every other tool makes you fight through filters, broken warm-ups, and walls of setup. Just tell Scrapivo what you want. It finds them, verifies them, and writes your outreach. Done.
         </p>
 
         {/* Waitlist Form / Success State */}
-        {submitted ? (
-          <div className="animate-fade-rise mt-10 max-w-sm mx-auto flex flex-col items-center gap-4 w-full relative z-10">
-            <div className="liquid-glass border border-foreground/10 rounded-2xl px-8 py-8 text-center w-full">
-              <div className="text-4xl mb-3">🎉</div>
-              <h2 className="font-display text-2xl text-foreground mb-2">You're in, {name}!</h2>
-              <p className="text-sm text-muted-foreground font-body leading-relaxed">
-                We'll reach out soon with early access. Get ready to ditch the filter chaos forever.
-              </p>
-            </div>
+        {isSuccess ? (
+          <div style={{ animation: 'fadeUp 0.6s ease both' }}>
+            <p style={{ fontFamily: 'Instrument Serif, serif', fontSize: '2rem', color: 'white' }}>
+              You're on the list.
+            </p>
+            <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>
+              We'll reach out when early access opens.
+            </p>
+            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.2)', marginTop: '6px' }}>
+              Check your inbox for a confirmation email.
+            </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="animate-fade-rise-delay mt-10 max-w-sm mx-auto flex flex-col gap-3 w-full relative z-10">
@@ -221,9 +245,10 @@ const Index = () => {
             />
             <button
               type="submit"
-              className="w-full rounded-2xl py-3.5 bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all"
+              disabled={isLoading}
+              className="w-full rounded-2xl py-3.5 bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Join the Waitlist →
+              {isLoading ? "Joining..." : "Join the Waitlist →"}
             </button>
             <p className="text-xs text-foreground/25 text-center mt-2">No spam. Early access only.</p>
           </form>
