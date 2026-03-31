@@ -169,7 +169,7 @@ const Index = () => {
         {/* Pill */}
         <div className="animate-fade-rise liquid-glass rounded-full px-5 py-2 border border-foreground/10 mb-8 relative z-10">
           <span className="uppercase text-xs tracking-widest text-muted-foreground font-body">
-            Plain English. Real Leads. Zero Hassle.
+            Easy Search. Real Leads. Zero Hassle.
           </span>
         </div>
 
@@ -182,7 +182,7 @@ const Index = () => {
 
         {/* Subcopy */}
         <p className="animate-fade-rise-delay font-body font-light text-base max-w-md mx-auto mt-5 leading-relaxed text-muted-foreground relative z-10">
-          Every other tool makes you fight through filters, broken warm-ups, and walls of setup. Just tell Prospera who you want. It finds them, verifies them, and writes your outreach. Done.
+          Every other tool makes you fight through filters, broken warm-ups, and walls of setup. Just tell Blomstre who/what you want. It finds them, verifies them, and writes your outreach. Done.
         </p>
 
         {/* Waitlist Form / Success State */}
@@ -258,7 +258,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="absolute bottom-0 w-full text-center text-xs text-foreground/20 py-5 z-10">
-        © 2026 Prospera. All rights reserved.
+        © 2026 Blomstre. All rights reserved.
       </footer>
     </div>
   );
