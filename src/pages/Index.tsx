@@ -145,7 +145,7 @@ const Index = () => {
 
       {/* Nav */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-5xl mx-auto">
-        <span className="font-display text-2xl tracking-tight text-foreground">Prospera</span>
+        <span className="font-display text-2xl tracking-tight text-foreground">Scrapivo</span>
         <div className="liquid-glass rounded-full px-4 py-1.5 flex items-center gap-2 border border-foreground/10">
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse-green" />
           <span className="text-xs text-foreground/60 font-body">Early Access Open</span>
@@ -182,7 +182,7 @@ const Index = () => {
 
         {/* Subcopy */}
         <p className="animate-fade-rise-delay font-body font-light text-base max-w-md mx-auto mt-5 leading-relaxed text-muted-foreground relative z-10">
-          Every other tool makes you fight through filters, broken warm-ups, and walls of setup. Just tell Blomstre who/what you want. It finds them, verifies them, and writes your outreach. Done.
+          Every other tool makes you fight through filters, broken warm-ups, and walls of setup. Just tell Scrapivo who/what you want. It finds them, verifies them, and writes your outreach. Done.
         </p>
 
         {/* Waitlist Form / Success State */}
@@ -258,7 +258,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="absolute bottom-0 w-full text-center text-xs text-foreground/20 py-5 z-10">
-        © 2026 Blomstre. All rights reserved.
+        © 2026 Scrapivo. All rights reserved.
       </footer>
     </div>
   );
