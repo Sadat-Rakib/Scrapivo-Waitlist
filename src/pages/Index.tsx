@@ -109,10 +109,26 @@ const Index = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!name.trim() || !email.trim()) {
+      console.error("Name and email are required");
+      alert("Please fill in both name and email fields.");
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.error("Invalid email format");
+      alert("Please enter a valid email address.");
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
-      await emailjs.send(
+      const result = await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
         import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
         {
@@ -121,10 +137,10 @@ const Index = () => {
           frustration: frustration,
         }
       );
-    } catch (error) {
-      console.error("EmailJS error:", error);
-    } finally {
-      setIsLoading(false);
+      
+      console.log("Email sent successfully:", result);
+      
+      // Only show success if email actually sent
       setIsSuccess(true);
 
       // Fire confetti
@@ -148,6 +164,11 @@ const Index = () => {
         if (Date.now() < end) requestAnimationFrame(frame);
       };
       frame();
+    } catch (error) {
+      console.error("EmailJS error:", error);
+      alert("Failed to send confirmation email. Please try again or contact support.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -227,6 +248,7 @@ const Index = () => {
               placeholder="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
               className="liquid-glass border border-foreground/10 rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 bg-transparent outline-none w-full"
             />
             <textarea
@@ -241,6 +263,7 @@ const Index = () => {
               placeholder="Your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
               className="liquid-glass border border-foreground/10 rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 bg-transparent outline-none w-full"
             />
             <button
