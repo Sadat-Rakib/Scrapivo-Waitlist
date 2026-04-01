@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import confetti from "canvas-confetti";
 import emailjs from '@emailjs/browser';
+import * as submissionsUtil from '@/utils/submissions';
 
 const painPoints = [
   "Apollo scheduling gaps 😮‍💨",
@@ -79,6 +80,26 @@ const Index = () => {
   // Initialize EmailJS
   useEffect(() => {
     emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+    
+    // Make submissions utility available globally for console access
+    if (typeof window !== 'undefined') {
+      (window as any).scrapivoSubmissions = {
+        getAll: submissionsUtil.getSubmissions,
+        exportCSV: submissionsUtil.downloadSubmissionsCSV,
+        count: () => submissionsUtil.getSubmissions().length,
+      };
+    }
+    
+    // Log stored submissions count on mount (for debugging)
+    try {
+      const existingSubmissions = localStorage.getItem('scrapivo-waitlist-submissions');
+      if (existingSubmissions) {
+        const submissions = JSON.parse(existingSubmissions);
+        console.log(`Found ${submissions.length} stored submissions in localStorage`);
+      }
+    } catch (error) {
+      console.error("Error reading localStorage:", error);
+    }
   }, []);
 
   // Mouse-follow glow
@@ -127,20 +148,49 @@ const Index = () => {
     
     setIsLoading(true);
 
+    // Prepare submission data
+    const submissionData = {
+      name: name.trim(),
+      email: email.trim(),
+      frustration: frustration.trim(),
+      timestamp: new Date().toISOString(),
+      id: Date.now().toString(),
+    };
+
+    console.log("Submitting form with data:", submissionData);
+    console.log("EmailJS Config:", {
+      serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+      templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY ? "Set" : "Missing",
+    });
+
     try {
+      // Send confirmation email to user
       const result = await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
         import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
         {
-          name: name,
-          email: email,
-          frustration: frustration,
+          name: submissionData.name,
+          email: submissionData.email,
+          frustration: submissionData.frustration,
         }
       );
       
       console.log("Email sent successfully:", result);
       
-      // Only show success if email actually sent
+      // Store submission in localStorage
+      try {
+        const existingSubmissions = localStorage.getItem('scrapivo-waitlist-submissions');
+        const submissions = existingSubmissions ? JSON.parse(existingSubmissions) : [];
+        submissions.push(submissionData);
+        localStorage.setItem('scrapivo-waitlist-submissions', JSON.stringify(submissions));
+        console.log("Submission stored in localStorage. Total submissions:", submissions.length);
+      } catch (storageError) {
+        console.error("Failed to store in localStorage:", storageError);
+        // Continue even if localStorage fails
+      }
+      
+      // Show success
       setIsSuccess(true);
 
       // Fire confetti
@@ -164,9 +214,26 @@ const Index = () => {
         if (Date.now() < end) requestAnimationFrame(frame);
       };
       frame();
-    } catch (error) {
-      console.error("EmailJS error:", error);
-      alert("Failed to send confirmation email. Please try again or contact support.");
+    } catch (error: any) {
+      console.error("EmailJS error details:", {
+        error,
+        message: error?.message,
+        text: error?.text,
+        status: error?.status,
+      });
+      
+      // Store submission even if email fails (for backup)
+      try {
+        const existingSubmissions = localStorage.getItem('scrapivo-waitlist-submissions');
+        const submissions = existingSubmissions ? JSON.parse(existingSubmissions) : [];
+        submissions.push({ ...submissionData, emailFailed: true });
+        localStorage.setItem('scrapivo-waitlist-submissions', JSON.stringify(submissions));
+        console.log("Submission stored in localStorage (email failed). Total submissions:", submissions.length);
+      } catch (storageError) {
+        console.error("Failed to store in localStorage:", storageError);
+      }
+      
+      alert(`Failed to send confirmation email. Error: ${error?.text || error?.message || 'Unknown error'}. Your submission has been saved locally. Please contact support at mirsadatbinrakib01@gmail.com`);
     } finally {
       setIsLoading(false);
     }
