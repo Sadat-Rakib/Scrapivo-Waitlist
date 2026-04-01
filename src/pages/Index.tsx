@@ -61,9 +61,9 @@ const useCountUp = (end: string, duration = 1500) => {
 const StatItem = ({ stat, index }: { stat: { value: string; label: string }; index: number }) => {
   const counter = useCountUp(stat.value);
   return (
-    <div className={`flex flex-col items-center gap-1 ${index > 0 ? "pl-10" : ""}`}>
-      <span ref={counter.ref} className="font-display text-xl text-foreground">{counter.display}</span>
-      <span className="text-xs text-white/60 uppercase tracking-wider font-body">{stat.label}</span>
+    <div className={`flex flex-col items-center gap-0.5 sm:gap-1 ${index > 0 ? "pl-4 sm:pl-6 md:pl-10" : ""}`}>
+      <span ref={counter.ref} className="font-display text-lg sm:text-xl text-foreground">{counter.display}</span>
+      <span className="text-[10px] sm:text-xs text-white/60 uppercase tracking-wide sm:tracking-wider font-body text-center leading-tight">{stat.label}</span>
     </div>
   );
 };
@@ -364,7 +364,7 @@ const Index = () => {
         </div>
 
         {/* Stats strip */}
-        <div className="animate-fade-rise-delay-2 mt-10 liquid-glass rounded-2xl px-8 py-4 inline-flex gap-10 items-center divide-x divide-white/20 border border-foreground/10">
+        <div className="animate-fade-rise-delay-2 mt-10 liquid-glass rounded-2xl px-4 sm:px-6 md:px-8 py-3 sm:py-4 inline-flex gap-4 sm:gap-6 md:gap-10 items-center divide-x divide-white/20 border border-foreground/10">
           {stats.map((stat, i) => (
               <StatItem key={i} stat={stat} index={i} />
           ))}
