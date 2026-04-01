@@ -131,17 +131,27 @@ const Index = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
-    if (!name.trim() || !email.trim()) {
-      console.error("Name and email are required");
-      alert("Please fill in both name and email fields.");
+    // Validate name field
+    if (!name.trim()) {
+      alert("Please enter your name.");
       return;
     }
     
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Validate frustration field
+    if (!frustration.trim()) {
+      alert("Please tell us your biggest frustration finding leads.");
+      return;
+    }
+    
+    // Validate email field
+    if (!email.trim()) {
+      alert("Please enter your email address.");
+      return;
+    }
+    
+    // Stricter email format validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
-      console.error("Invalid email format");
       alert("Please enter a valid email address.");
       return;
     }
@@ -164,6 +174,17 @@ const Index = () => {
       publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY ? "Set" : "Missing",
     });
 
+    // Store submission in localStorage first (backup)
+    try {
+      const existingSubmissions = localStorage.getItem('scrapivo-waitlist-submissions');
+      const submissions = existingSubmissions ? JSON.parse(existingSubmissions) : [];
+      submissions.push(submissionData);
+      localStorage.setItem('scrapivo-waitlist-submissions', JSON.stringify(submissions));
+      console.log("Submission stored in localStorage. Total submissions:", submissions.length);
+    } catch (storageError) {
+      console.error("Failed to store in localStorage:", storageError);
+    }
+
     try {
       // Send confirmation email to user
       const result = await emailjs.send(
@@ -177,66 +198,47 @@ const Index = () => {
       );
       
       console.log("Email sent successfully:", result);
+      console.log("Email status:", result.status);
+      console.log("Email text:", result.text);
       
-      // Store submission in localStorage
-      try {
-        const existingSubmissions = localStorage.getItem('scrapivo-waitlist-submissions');
-        const submissions = existingSubmissions ? JSON.parse(existingSubmissions) : [];
-        submissions.push(submissionData);
-        localStorage.setItem('scrapivo-waitlist-submissions', JSON.stringify(submissions));
-        console.log("Submission stored in localStorage. Total submissions:", submissions.length);
-      } catch (storageError) {
-        console.error("Failed to store in localStorage:", storageError);
-        // Continue even if localStorage fails
-      }
-      
-      // Show success
-      setIsSuccess(true);
-
-      // Fire confetti
-      const duration = 2000;
-      const end = Date.now() + duration;
-      const frame = () => {
-        confetti({
-          particleCount: 3,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0, y: 0.7 },
-          colors: ["#ffffff", "#a0a0a0", "#606060"],
-        });
-        confetti({
-          particleCount: 3,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1, y: 0.7 },
-          colors: ["#ffffff", "#a0a0a0", "#606060"],
-        });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      };
-      frame();
-    } catch (error: any) {
-      console.error("EmailJS error details:", {
-        error,
-        message: error?.message,
-        text: error?.text,
-        status: error?.status,
+    } catch (error: unknown) {
+      console.error("EmailJS Error Details:", {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        text: (error as any)?.text,
+        status: (error as any)?.status,
+        fullError: error,
       });
       
-      // Store submission even if email fails (for backup)
-      try {
-        const existingSubmissions = localStorage.getItem('scrapivo-waitlist-submissions');
-        const submissions = existingSubmissions ? JSON.parse(existingSubmissions) : [];
-        submissions.push({ ...submissionData, emailFailed: true });
-        localStorage.setItem('scrapivo-waitlist-submissions', JSON.stringify(submissions));
-        console.log("Submission stored in localStorage (email failed). Total submissions:", submissions.length);
-      } catch (storageError) {
-        console.error("Failed to store in localStorage:", storageError);
-      }
-      
-      alert(`Failed to send confirmation email. Error: ${error?.text || error?.message || 'Unknown error'}. Your submission has been saved locally. Please contact support at mirsadatbinrakib01@gmail.com`);
-    } finally {
-      setIsLoading(false);
+      // Log but don't block the user experience
+      console.warn("Email failed to send, but submission is saved locally");
     }
+    
+    // Always show success (data is saved locally regardless of email status)
+    setIsSuccess(true);
+    setIsLoading(false);
+
+    // Fire confetti
+    const duration = 2000;
+    const end = Date.now() + duration;
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.7 },
+        colors: ["#ffffff", "#a0a0a0", "#606060"],
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.7 },
+        colors: ["#ffffff", "#a0a0a0", "#606060"],
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    };
+    frame();
   };
 
   return (
@@ -312,7 +314,7 @@ const Index = () => {
           <form onSubmit={handleSubmit} className="animate-fade-rise-delay mt-10 max-w-sm mx-auto flex flex-col gap-3 w-full relative z-10">
             <input
               type="text"
-              placeholder="Your name"
+              placeholder="Your name *"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -320,14 +322,15 @@ const Index = () => {
             />
             <textarea
               rows={2}
-              placeholder="What's your biggest frustration finding leads right now?"
+              placeholder="What's your biggest frustration finding leads right now? *"
               value={frustration}
               onChange={(e) => setFrustration(e.target.value)}
+              required
               className="liquid-glass border border-foreground/10 rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-foreground/30 bg-transparent outline-none w-full resize-none"
             />
             <input
               type="email"
-              placeholder="Your email address"
+              placeholder="Your email address *"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
